@@ -134,3 +134,7 @@ func toGoType(index int, t Type, output []byte) (interface{}, error) {
 		return nil, fmt.Errorf("abi: unknown type %v", t.T)
 	}
 }
+
+func has0xPrefix(input string) bool {
+	return len(input) >= 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X')
+}

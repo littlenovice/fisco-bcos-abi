@@ -6,10 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
-func has0xPrefix(input string) bool {
-	return len(input) >= 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X')
-}
-
 func Myexist(obj, encodeJsonString, abiJsonString string) (error, []decodedCallData) {
 	var (
 		err             error
@@ -19,27 +15,28 @@ func Myexist(obj, encodeJsonString, abiJsonString string) (error, []decodedCallD
 
 	if has0xPrefix(encodeJsonString) {
 		encodeDataBytes, err = hexutil.Decode(encodeJsonString)
-		fmt.Println(1, err)
+		if err != nil {
+			fmt.Println("hexutil.Decode Fail: ", err)
+			return err, nil
+		}
 	} else if encodeDataBytes, err = hex.DecodeString(encodeJsonString); err != nil {
 		// it is likely a json string
 		encodeDataBytes = []byte(encodeJsonString)
 		err = nil
 	}
-	if err != nil {
-		return err, nil
-	}
+
 	switch obj {
 	case "input":
 		dds, err = parseCallData(encodeDataBytes, abiJsonString)
 		if err != nil {
-			fmt.Println(2, err)
+			fmt.Println("parseCallData Fail: ", err)
 			return err, nil
 		}
 		return nil, dds
 	case "logs":
 		dds, err = parseEventData(encodeDataBytes, abiJsonString)
 		if err != nil {
-			fmt.Println(3, err)
+			fmt.Println("parseEventData Fail: ", err)
 			return err, nil
 		}
 		return nil, dds

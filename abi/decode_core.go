@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	types2 "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 
 	"strings"
@@ -65,7 +65,6 @@ func parseCallData(data []byte, abidata string) ([]decodedCallData, error) {
 	}
 
 	sigdata, argdata := data[:4], data[4:]
-	fmt.Println(5, string(sigdata), 6, string(argdata))
 	if len(argdata)%32 != 0 {
 		return nil, errors.New("abi: data bytes invalid")
 	}
@@ -95,20 +94,17 @@ func parseEventData(data []byte, abidata string) ([]decodedCallData, error) {
 	if err != nil {
 		return nil, errors.New("abi: failed to decode abi json")
 	}
-	fmt.Println(22)
-	var logs []types2.Log
-	//var logs []NewLog //?
+
+	var logs []types.Log
 	if err := json.Unmarshal(data, &logs); err != nil {
-		fmt.Println(7)
+		fmt.Println("Unmarshal Fail:", err)
 		return nil, err
 	}
 	var dds []decodedCallData
 	for _, log := range logs {
 		for _, item := range abispec.Events { //遍历abi文件中的event
 			for i := range log.Topics { //遍历topic
-				if item.ID == log.Topics[i] { //在topic中找到event名  正常情况好像都在第一个i=0好像就行了
-					fmt.Printf("input%v", item.Inputs)
-
+				if item.ID == log.Topics[i] { //在topic中找到event名  正常情况好像都在第一个i=0好像就行
 					dd, err := getDecodedCallData(item.Inputs, log.Data, "", item.Name, log.Topics[1:]) //event的所有参数，传入值，签名，event名
 					if err != nil {
 						return nil, err
@@ -118,7 +114,6 @@ func parseEventData(data []byte, abidata string) ([]decodedCallData, error) {
 			}
 		}
 	}
-	fmt.Println(18, dds)
 	if dds == nil || len(dds) == 0 {
 		return nil, errors.New("abi: failed to get match event")
 	}
@@ -127,23 +122,12 @@ func parseEventData(data []byte, abidata string) ([]decodedCallData, error) {
 }
 
 func getDecodedCallData(inputs abi.Arguments, argdata []byte, funcSignature string, funcName string, topicArgFrom1 []common.Hash) (*decodedCallData, error) {
-	//fmt.Println(16,common.Bytes2Hex(argdata))
-	//allArgData := make([]byte, 0)
-	//fmt.Println(17,topicArgFrom1)
-	//for _, topic := range topicArgFrom1 {
-	//	allArgData = append(allArgData, topic.Bytes()...)
-	//	fmt.Println(21,topic.Bytes())
-	//}
-	//fmt.Println(18)
-	//allArgData = append(allArgData, argdata...)
-	//fmt.Println(19,common.Bytes2Hex(allArgData))
-
 	v, err := inputs.UnpackValues(argdata)
 	if err != nil {
 		fmt.Println(20, err)
 		return nil, err
 	}
-	fmt.Println(13, v)
+	//fmt.Println("data arg: ", v)
 	decoded := decodedCallData{signature: funcSignature, name: funcName}
 
 	for n, argument := range inputs {
@@ -191,5 +175,3 @@ func getDecodedCallData(inputs abi.Arguments, argdata []byte, funcSignature stri
 
 	return &decoded, nil
 }
-
-
